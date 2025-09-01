@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabajo de Emociones, Modelos y Simulación</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ffffff;
+            --secondary: #f8f8f8;
+            --accent: #000000;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            line-height: 1.47059;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--primary);
+            padding: 80px 40px;
+            box-shadow: none;
+            border: none;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+
+        .header h1 {
+            font-size: 56px;
+            font-weight: 600;
+            letter-spacing: -0.005em;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.38105;
+            letter-spacing: 0.011em;
+        }
+
+        .input-section {
+            max-width: 800px;
+            margin: 0 auto 120px;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 20px 30px;
+            background: var(--secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+            letter-spacing: -0.022em;
+            height: 56px;
+        }
+
+        .prompt-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .prompt-input::placeholder {
+            color: #aaaaaa;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            letter-spacing: -0.022em;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-btn:hover {
+            background: #333333;
+        }
+
+        .generate-btn:active {
+            transform: scale(0.98);
+        }
+
+        .result-container {
+            margin-top: 80px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-container.active {
+            display: block;
+        }
+
+        .artwork-frame {
+            display: inline-block;
+            padding: 0;
+            background: var(--primary);
+            border: none;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .generated-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: all 0.5s ease;
+        }
+
+        .artwork-info {
+            margin-top: 30px;
+            text-align: left;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .artwork-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 0.011em;
+            line-height: 1.28571;
+        }
+
+        .artwork-description {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.47059;
+            letter-spacing: -0.022em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-text {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-top: 30px;
+            letter-spacing: -0.022em;
+        }
+
+        .loading-indicator {
+            width: 60px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .loading-indicator::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 100%;
+            background: var(--accent);
+            animation: loading 1.5s infinite ease-in-out;
+            border-radius: 2px;
+        }
+
+        @keyframes loading {
+            0% { left: -30px; }
+            100% { left: 100%; }
+        }
+
+        .footer {
+            margin-top: 120px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 400;
+            padding: 40px 0;
+            border-top: 1px solid var(--border-color);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            letter-spacing: -0.022em;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+        }
+
+        .footer-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .footer-icons a {
+            color: var(--text-secondary);
+            font-size: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-icons a:hover {
+            color: var(--accent);
+        }
+
+        .divider {
+            width: 40px;
+            height: 2px;
+            background: var(--accent);
+            margin: 30px auto;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 40px;
+            }
+            
+            .header p {
+                font-size: 19px;
+            }
+            
+            .container {
+                padding: 60px 20px;
+            }
+            
+            .artwork-title {
+                font-size: 24px;
+            }
+            
+            .prompt-input, .generate-btn {
+                font-size: 16px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Trabajo de Emociones</h1>
+            <div class="divider"></div>
+            <p>Generador de imágenes cinematográficas. Describe cualquier escena y nuestra IA creará una obra visualmente impactante.</p>
+        </div>
+
+        <div class="input-section">
+            <input type="text" id="prompt" class="prompt-input" placeholder="Describe la escena que deseas visualizar...">
+            <button id="generate-btn" class="generate-btn">
+                <i class="fas fa-magic"></i> Generar Imagen
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-indicator"></div>
+            <p class="loading-text">Creando su experiencia visual cinematográfica...</p>
+        </div>
+
+        <div class="result-container" id="result-container">
+            <div class="artwork-frame">
+                <div class="image-container">
+                    <img id="generated-image" class="generated-image" src="" alt="Imagen generada">
+                </div>
+            </div>
+            
+            <div class="artwork-info">
+                <h2 class="artwork-title" id="artwork-title">Título de la obra</h2>
+                <p class="artwork-description" id="artwork-description">Descripción cinematográfica de la imagen generada.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2023 Trabajo de Emociones, Modelos y Simulación</p>
+        <div class="footer-icons">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de emociones y sus características
+        const emotions = {
+            libertad: {
+                name: "Libertad",
+                keywords: ["cielo", "campo abierto", "aves", "montaña", "océano", "amplio horizonte", "volar", "sin límites"],
+                prompts: [
+                    "Un pájaro volando sobre un océano infinito al amanecer",
+                    "Una persona corriendo libremente por un campo de hierba bajo un cielo azul",
+                    "Un paisaje montañoso con nubes brillantes y luz dorada",
+                    "Un camino sinuoso que se pierde en el horizonte",
+                    "Un globo aerostático flotando sobre un valle al atardecer"
+                ],
+                descriptions: [
+                    "Esta escena captura la esencia de la expansión sin límites a través de la inmensidad del paisaje y la sensación de posibilidades infinitas.",
+                    "La composición cinematográfica enfatiza la conexión con la naturaleza en su estado más puro y liberador.",
+                    "La luz dorada y la perspectiva amplia crean una atmósfera de expansión y libertad absoluta."
+                ]
+            },
+            tristeza: {
+                name: "Tristeza",
+                keywords: ["lluvia", "niebla", "soledad", "melancolía", "lágrimas", "oscuridad", "abandono"],
+                prompts: [
+                    "Un banco de parque vacío bajo la lluvia intensa",
+                    "Una figura solitaria caminando por una calle desierta de noche",
+                    "Un paisaje costero con niebla espesa y agua gris",
+                    "Una habitación abandonada con luz tenue entrando por una ventana",
+                    "Un árbol desnudo en un campo bajo un cielo tormentoso"
+                ],
+                descriptions: [
+                    "Esta imagen evoca la introspección profunda a través de la composición visual y la paleta de colores desaturada.",
+                    "La soledad del espacio y la iluminación tenue crean una atmósfera de reflexión silenciosa.",
+                    "La cinematografía enfatiza la belleza en los momentos de contemplación emocional."
+                ]
+            },
+            redencion: {
+                name: "Redención",
+                keywords: ["amanecer", "luz", "esperanza", "renacer", "salvación", "ascenso", "transformación"],
+                prompts: [
+                    "Un amanecer brillante rompiendo a través de nubes oscuras",
+                    "Una persona emergiendo de aguas turbulentas hacia la luz",
+                    "Un camino iluminado que conduce desde la oscuridad",
+                    "Un faro en medio de una tormenta proyectando un rayo de esperanza",
+                    "Mariposas saliendo de una caja oscura hacia la luz"
+                ],
+                descriptions: [
+                    "Esta escena representa la transformación a través del contraste entre luz y sombra.",
+                    "La composición visual simboliza el renacimiento y la superación a través de la luz emergente.",
+                    "La cinematografía captura el momento de transición hacia un nuevo comienzo."
+                ]
+            },
+            motivacion: {
+                name: "Motivación",
+                keywords: ["éxito", "logro", "energía", "determinación", "fuerza", "superación", "meta"],
+                prompts: [
+                    "Un corredor cruzando la línea de meta en un estadio lleno",
+                    "Una persona en la cima de una montaña con los brazos levantados",
+                    "Un atleta en medio de un esfuerzo físico intenso con determinación",
+                    "Un grupo de personas levantando un trofeo con luces de fondo",
+                    "Un camino ascendente con una meta brillante en la distancia"
+                ],
+                descriptions: [
+                    "Esta imagen captura la esencia de la determinación y el triunfo a través de la composición dinámica.",
+                    "La energía visual y la iluminación dramática enfatizan el poder del logro humano.",
+                    "La cinematografía representa el momento culminante del esfuerzo y la recompensa."
+                ]
+            }
+        };
+
+        // Variables de estado
+        const promptInput = document.getElementById('prompt');
+        const generateBtn = document.getElementById('generate-btn');
+        const loading = document.getElementById('loading');
+        const resultContainer = document.getElementById('result-container');
+        const generatedImage = document.getElementById('generated-image');
+        const artworkTitle = document.getElementById('artwork-title');
+        const artworkDescription = document.getElementById('artwork-description');
+
+        // Event Listeners
+        generateBtn.addEventListener('click', generateImage);
+
+        // Función para generar imagen
+        function generateImage() {
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) {
+                promptInput.focus();
+                return;
+            }
+
+            // Mostrar indicador de carga
+            loading.classList.add('active');
+            resultContainer.classList.remove('active');
+
+            // Simular tiempo de carga de la IA
+            setTimeout(() => {
+                // Seleccionar una emoción aleatoriamente
+                const emotionKeys = Object.keys(emotions);
+                const selectedEmotion = emotionKeys[Math.floor(Math.random() * emotionKeys.length)];
+                const emotion = emotions[selectedEmotion];
+                
+                // Seleccionar un prompt y descripción aleatorios para la emoción
+                const randomPromptIndex = Math.floor(Math.random() * emotion.prompts.length);
+                const randomPrompt = emotion.prompts[randomPromptIndex];
+                const randomDescription = emotion.descriptions[randomPromptIndex];
+                
+                // Generar una imagen basada en la emoción (
